@@ -1,4 +1,4 @@
-module github.com/pixelrazor/prr
+module github.com/pixelrazor/spotifresh
 
 go 1.13
 
