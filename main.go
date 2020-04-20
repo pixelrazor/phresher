@@ -2,14 +2,15 @@ package main
 
 import (
 	"fmt"
-	"github.com/google/uuid"
-	"github.com/patrickmn/go-cache"
-	"golang.org/x/oauth2"
 	"html/template"
 	"log"
 	"net/http"
 	"os"
 	"time"
+
+	"github.com/google/uuid"
+	"github.com/patrickmn/go-cache"
+	"golang.org/x/oauth2"
 
 	"github.com/zmb3/spotify"
 )
@@ -49,6 +50,8 @@ var (
 "/error"			-> page displays the error that is in the form param
 
 TODO: if not authed when going to a page, redirect to spotify auth page and have it callback to the page they tried to go to
+
+TODO: make a list of all tracks to be added, then add all at once ONLY 100 AT A TIME
 */
 
 func main() {
