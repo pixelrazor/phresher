@@ -34,7 +34,7 @@ var (
 /*
 "/", "/index.html"	-> home page
 					-> if user is authenticated, it will allow them to pick a playlist and a duration
-					-> use a form to do a post, with playlists in a dropdown box
+					-> use a form to do a post, with playlists in a dropdown box. Checkbox for private/public
 					-> if user is not authenticated, there will be a login button
 
 "/callback" 		-> oauth callback
