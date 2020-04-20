@@ -5,6 +5,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/patrickmn/go-cache"
 	"golang.org/x/oauth2"
+	"html/template"
 	"log"
 	"net/http"
 	"os"
@@ -25,8 +26,9 @@ var (
 		spotify.ScopePlaylistReadPrivate,
 		spotify.ScopePlaylistModifyPrivate,
 		spotify.ScopePlaylistModifyPublic)
-	state     string
-	authCache *cache.Cache
+	roarTemplate = template.Must(template.ParseFiles("roar.html"))
+	state        string
+	authCache    *cache.Cache
 )
 
 /*
@@ -61,6 +63,7 @@ func main() {
 	http.HandleFunc("/callback", completeAuth)
 	http.HandleFunc("/index.html", homeHandler)
 	http.HandleFunc("/do-the-roar", roarHandler)
+	http.HandleFunc("/work-bitch", workHandler)
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		if r.RequestURI == "/" {
 			homeHandler(w, r)
@@ -78,44 +81,34 @@ func newClient(token string) spotify.Client {
 	})
 }
 
-func dateStringToTime(date, precision string) time.Time {
-	format := ""
-	switch precision {
-	case "year":
-		format = "2009"
-	case "month":
-		format = "2009-02"
-	case "day":
-		format = "2009-02-01"
-	}
-	t, err := time.Parse(format, date)
-	fmt.Println(err)
-	return t
-}
-
 func roarHandler(w http.ResponseWriter, r *http.Request) {
-	// ensure auth
-	cookie, err := r.Cookie(sessionCookieID)
-	if err == http.ErrNoCookie {
-		http.Redirect(w, r, "index.html", http.StatusSeeOther)
-		return
-	} else if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		return
-	}
-	id := cookie.Value
-	token, ok := authCache.Get(id)
-	if !ok {
-		http.Redirect(w, r, "index.html", http.StatusSeeOther)
-		return
-	}
-	// ensure playlistID
-	err = r.ParseForm()
+	err := r.ParseForm()
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 	playlistID := r.Form.Get(playlistIDKKey)
+	roarTemplate.Execute(w, playlistID)
+}
+
+func workHandler(w http.ResponseWriter, r *http.Request) {
+	// ensure playlistID
+	err := r.ParseForm()
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+	playlistID := r.Form.Get("playlist")
+	id := r.Form.Get("uuid")
+	if playlistID == "" || id == "" {
+		w.WriteHeader(http.StatusUnauthorized)
+		return
+	}
+	token, ok := authCache.Get(id)
+	if !ok {
+		w.WriteHeader(http.StatusUnauthorized)
+		return
+	}
 	client := newClient(token.(string))
 	client.AutoRetry = true
 
@@ -132,7 +125,7 @@ func roarHandler(w http.ResponseWriter, r *http.Request) {
 				artists[artist.ID] = true
 			}
 		}
-		if err := client.NextPage(&playlist.Tracks);err != nil {
+		if err := client.NextPage(&playlist.Tracks); err != nil {
 			break
 		}
 	}
@@ -160,7 +153,7 @@ func roarHandler(w http.ResponseWriter, r *http.Request) {
 						for _, track := range trackPage.Tracks {
 							tracks = append(tracks, track.ID)
 						}
-						if err := client.NextPage(trackPage);err != nil {
+						if err := client.NextPage(trackPage); err != nil {
 							break
 						}
 					}

@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Doing the thing</title>
+</head>
+<body>
+<h1 id="progress">Processing...</h1>
+<script type="text/javascript">
+    function getCookie(cname) {
+        var name = cname + "=";
+        var decodedCookie = decodeURIComponent(document.cookie);
+        var ca = decodedCookie.split(';');
+        for (var i = 0; i < ca.length; i++) {
+            var c = ca[i];
+            while (c.charAt(0) == ' ') {
+                c = c.substring(1);
+            }
+            if (c.indexOf(name) == 0) {
+                return c.substring(name.length, c.length);
+            }
+        }
+        return "";
+    };
+
+    function makePlaylist() {
+        console.log("in onload");
+        var playlist_id = "{{.}}";
+        var uuid = getCookie("session_id");
+        // if cookie expired, go to home page
+        if (uuid == "") {
+            window.location.replace("/index.html");
+            return
+        }
+        console.log(uuid);
+        console.log(playlist_id);
+        var xhr = new XMLHttpRequest();
+        xhr.open("POST", '/work-bitch', true);
+        xhr.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
+        xhr.onreadystatechange = function () {
+            if (this.readyState === XMLHttpRequest.DONE) {
+                switch (this.status) {
+                    case 200:
+                        document.getElementById("progress").innerHTML = "Done! Check your Spotify account";
+                        break;
+                    default:
+                        document.getElementById("progress").innerHTML = "Error: " + this.statusText;
+                }
+            }
+        };
+        xhr.send("uuid=" + uuid + "&playlist=" + playlist_id);
+    }
+
+    console.log("loaded script");
+    window.onload = makePlaylist;
+</script>
+</body>
+</html>
