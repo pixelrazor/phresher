@@ -3,9 +3,17 @@
 <head>
     <meta charset="UTF-8">
     <title>Doing the thing</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700|Material+Icons">
+    <link rel="stylesheet"
+          href="https://unpkg.com/bootstrap-material-design@4.1.1/dist/css/bootstrap-material-design.min.css"
+          integrity="sha384-wXznGJNEXNG1NFsbm0ugrLFMQPWswR3lds2VeinahP8N0zJw9VWSopbjv2x7WCvX" crossorigin="anonymous">
 </head>
 <body>
-<h1 id="progress">Processing...</h1>
+<div class="jumbotron text-center" id="content-area">
+    <h1 id="progress">Processing</h1>
+</div>
+
 <script type="text/javascript">
     function getCookie(cname) {
         var name = cname + "=";
@@ -24,16 +32,10 @@
     };
 
     function makePlaylist() {
-        console.log("in onload");
-        var playlist_id = "{{.}}";
+        var playlist_id = "{{.PlaylistID}}";
+        var weeks = "{{.Weeks}}"
+        var priv = "{{.Private}}"
         var uuid = getCookie("session_id");
-        // if cookie expired, go to home page
-        if (uuid == "") {
-            window.location.replace("/index.html");
-            return
-        }
-        console.log(uuid);
-        console.log(playlist_id);
         var xhr = new XMLHttpRequest();
         xhr.open("POST", '/work-bitch', true);
         xhr.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
@@ -42,17 +44,36 @@
                 switch (this.status) {
                     case 200:
                         document.getElementById("progress").innerHTML = "Done! Check your Spotify account";
+                        var link = document.createElement("a");
+                        link.appendChild(document.createTextNode("Let's listen"));
+                        link.setAttribute("href", this.responseText);
+                        document.getElementById("content-area").appendChild(link);
                         break;
                     default:
                         document.getElementById("progress").innerHTML = "Error: " + this.statusText;
                 }
+                var link = document.createElement("a");
+                link.appendChild(document.createTextNode("Wanna see me do it again?"));
+                link.setAttribute("href", "/");
+                document.getElementById("content-area").appendChild(link);
             }
         };
-        xhr.send("uuid=" + uuid + "&playlist=" + playlist_id);
+        xhr.send("uuid=" + uuid + "&playlist=" + playlist_id + "&weeks=" + weeks + "&private=" + priv);
     }
 
-    console.log("loaded script");
     window.onload = makePlaylist;
 </script>
+<script src="https://code.jquery.com/jquery-3.2.1.slim.min.js"
+        integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN"
+        crossorigin="anonymous"></script>
+<script src="https://unpkg.com/popper.js@1.12.6/dist/umd/popper.js"
+        integrity="sha384-fA23ZRQ3G/J53mElWqVJEGJzU0sTs+SvzG8fXVWP+kJQ1lwFAOkcUOysnlKJC33U"
+        crossorigin="anonymous"></script>
+<script src="https://unpkg.com/bootstrap-material-design@4.1.1/dist/js/bootstrap-material-design.js"
+        integrity="sha384-CauSuKpEqAFajSpkdjv3z9t8E7RlpJ1UP0lKM/+NdtSarroVKu069AlsRPKkFBz9"
+        crossorigin="anonymous"></script>
+<script>$(document).ready(function () {
+        $('body').bootstrapMaterialDesign();
+    });</script>
 </body>
 </html>

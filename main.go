@@ -3,9 +3,11 @@ package main
 import (
 	"fmt"
 	"html/template"
+	"io"
 	"log"
 	"net/http"
 	"os"
+	"strconv"
 	"time"
 
 	"github.com/google/uuid"
@@ -27,10 +29,12 @@ var (
 		spotify.ScopePlaylistReadPrivate,
 		spotify.ScopePlaylistModifyPrivate,
 		spotify.ScopePlaylistModifyPublic)
-	roarTemplate = template.Must(template.ParseFiles("roar.html"))
-	state        string
-	authCache    *cache.Cache
-)
+	roarTemplate      = template.Must(template.ParseFiles("roar.html"))
+	loggedInTemplate  = template.Must(template.ParseFiles("logged_in.html"))
+	loggedOutTemplate = template.Must(template.ParseFiles("logged_out.html"))
+	state             string
+	authCache         *cache.Cache
+) // TODO: add greeting to main page after login
 
 /*
 "/", "/index.html"	-> home page
@@ -51,7 +55,9 @@ var (
 
 TODO: if not authed when going to a page, redirect to spotify auth page and have it callback to the page they tried to go to
 
-TODO: make a list of all tracks to be added, then add all at once ONLY 100 AT A TIME
+TODO: make playlist from user's top artists
+TODO: make playlist from user's library (saves songs and albums)
+TODO: on completion, give a button to go home and a button to go to the playlist
 */
 
 func main() {
@@ -90,8 +96,16 @@ func roarHandler(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
-	playlistID := r.Form.Get(playlistIDKKey)
-	roarTemplate.Execute(w, playlistID)
+	playlistID := r.PostForm.Get(playlistIDKKey)
+	weeks := r.PostForm.Get("weeks")
+	private := r.PostForm.Get("private")
+	roarTemplate.Execute(w, struct {
+		PlaylistID, Weeks, Private string
+	}{
+		PlaylistID: playlistID,
+		Weeks:      weeks,
+		Private:    private,
+	})
 }
 
 func workHandler(w http.ResponseWriter, r *http.Request) {
@@ -101,8 +115,17 @@ func workHandler(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
-	playlistID := r.Form.Get("playlist")
-	id := r.Form.Get("uuid")
+	playlistID := r.PostForm.Get("playlist")
+	weeks, err := strconv.Atoi(r.PostForm.Get("weeks"))
+	if err != nil || weeks < 1 || weeks > 4 {
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+	private := false
+	if r.PostForm.Get("private") == "true" {
+		private = true
+	}
+	id := r.PostForm.Get("uuid")
 	if playlistID == "" || id == "" {
 		w.WriteHeader(http.StatusUnauthorized)
 		return
@@ -121,53 +144,95 @@ func workHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	// Get all artists on playlist
-	artists := make(map[spotify.ID]bool)
+	artists := make(map[spotify.ID]string)
 	for {
 		for _, track := range playlist.Tracks.Tracks {
 			for _, artist := range track.Track.Artists {
-				artists[artist.ID] = true
+				artists[artist.ID] = artist.Name
 			}
 		}
 		if err := client.NextPage(&playlist.Tracks); err != nil {
+			if err != spotify.ErrNoMorePages {
+				log.Println("Error getting next tracks from playlist", err)
+			}
 			break
 		}
 	}
+	delete(artists, "") // Yeah so this happens
 
 	// Make playlist
-	user, _ := client.CurrentUser()
-	playlist, _ = client.CreatePlaylistForUser(user.ID, "FRESH: "+playlist.Name, "The freshest tracks from the artists in "+playlist.Name, true)
+	user, err := client.CurrentUser()
+	if err != nil {
+		log.Println("Failed to get current user:", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+	playlist, err = client.CreatePlaylistForUser(user.ID, "FRESH: "+playlist.Name, "The freshest tracks from the artists in "+playlist.Name, !private)
+	if err != nil {
+		log.Println("Failed make playlist:", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
 
 	// For each artist
-	for artist := range artists {
+	tracks := make([]spotify.ID, 0)
+	for artist, name := range artists {
 		// Get their albums
 		market := new(string)
 		*market = spotify.MarketFromToken
-		albumPage, _ := client.GetArtistAlbumsOpt(artist, &spotify.Options{
+		albumPage, err := client.GetArtistAlbumsOpt(artist, &spotify.Options{
 			Country: market,
 		}, spotify.AlbumTypeAlbum, spotify.AlbumTypeSingle)
+		if err != nil {
+			log.Println("Failed to get artist albums:", err, name, artist)
+			continue
+		}
 		for {
 			for _, album := range albumPage.Albums {
 				// If the album is new
-				if album.ReleaseDateTime().After(time.Now().AddDate(0, -1, 0)) {
+				if album.ReleaseDateTime().After(time.Now().AddDate(0, 0, -7*weeks)) {
 					// Add all tracks to new playlist
-					trackPage, _ := client.GetAlbumTracks(album.ID)
-					tracks := make([]spotify.ID, 0)
+					trackPage, err := client.GetAlbumTracks(album.ID)
+					if err != nil {
+						log.Println("Failed to get album tracks", err, album.Name, album.ID)
+						continue
+					}
 					for {
 						for _, track := range trackPage.Tracks {
 							tracks = append(tracks, track.ID)
 						}
 						if err := client.NextPage(trackPage); err != nil {
+							if err != spotify.ErrNoMorePages {
+								log.Println("Error getting next tracks from album:", err, album.Name, album.ID)
+							}
 							break
 						}
 					}
-					client.AddTracksToPlaylist(playlist.ID, tracks...)
+					for len(tracks) >= 100 {
+						_, err := client.AddTracksToPlaylist(playlist.ID, tracks[:100]...)
+						if err != nil {
+							log.Println("Failed to add a batch of songs:", err)
+							break
+						}
+						tracks = tracks[100:]
+					}
 				}
 			}
 			if err := client.NextPage(albumPage); err != nil {
+				if err != spotify.ErrNoMorePages {
+					log.Println("Error getting next albums from artist", err, artist)
+				}
 				break
 			}
 		}
 	}
+	if len(tracks) > 0 {
+		_, err := client.AddTracksToPlaylist(playlist.ID, tracks...)
+		if err != nil {
+			log.Println("Failed to add final batch of songs:", err)
+		}
+	}
+	io.WriteString(w, playlist.ExternalURLs["spotify"])
 }
 func homeHandler(w http.ResponseWriter, r *http.Request) {
 	cookie, err := r.Cookie(sessionCookieID)
@@ -195,23 +260,24 @@ func homeLoggedInHandler(w http.ResponseWriter, r *http.Request, token string) {
 		fmt.Fprintln(w, err)
 		return
 	}
-	fmt.Fprintln(w, "<html><body>")
-	defer fmt.Fprintln(w, "</body></html>")
+	playlists := make([]struct {
+		ID, Name string
+	}, 0)
 	for {
 		for _, playlist := range playlistPage.Playlists {
-			fmt.Fprintf(w, "<a href=\"/do-the-roar?playlist_id=%v\">%v</a></br>", playlist.ID, playlist.Name)
+			playlists = append(playlists, struct{ ID, Name string }{ID: string(playlist.ID), Name: playlist.Name})
+			//fmt.Fprintf(w, "<a href=\"/do-the-roar?playlist_id=%v\">%v</a></br>", playlist.ID, playlist.Name)
 		}
 		err := client.NextPage(playlistPage)
 		if err != nil {
 			break
 		}
 	}
+	loggedInTemplate.Execute(w, playlists)
 }
 
 func homeLoggedOutHandler(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprintln(w, "<html><body>")
-	defer fmt.Fprintln(w, "</body></html>")
-	fmt.Fprintf(w, `<a href="%v">Login</a>`, auth.AuthURL(state))
+	loggedOutTemplate.Execute(w, auth.AuthURL(state))
 }
 
 func completeAuth(w http.ResponseWriter, r *http.Request) {
