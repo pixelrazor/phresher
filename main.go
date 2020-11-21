@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"os"
 	"sort"
 	"strconv"
 	"time"
@@ -65,8 +66,11 @@ TODO: on completion, give a button to go home and a button to go to the playlist
 */
 
 func main() {
-	state = "***REMOVED***"
-	auth.SetAuthInfo("***REMOVED***", "***REMOVED***")
+	ok := false
+	state, ok = os.LookupEnv("SPOTIFY_STATE")
+	if !ok {
+		panic("SPOTIFY_STATE environment var not set")
+	}
 	authCache = cache.New(24*time.Hour, time.Hour)
 	// first start an HTTP server
 	// TODO: about page, error pages, favicon
@@ -252,7 +256,6 @@ func workHandler(w http.ResponseWriter, r *http.Request) {
 					}
 				}
 			}
-			apiCalls++
 			if err := client.NextPage(albumPage); err != nil {
 				if err != spotify.ErrNoMorePages {
 					log.Println("Error getting next albums from artist", err, artist)
@@ -262,7 +265,6 @@ func workHandler(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	if len(tracks) > 0 {
-		apiCalls++
 		_, err := client.AddTracksToPlaylist(playlist.ID, tracks...)
 		if err != nil {
 			log.Println("Failed to add final batch of songs:", err)
