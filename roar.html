@@ -1,79 +1,84 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <title>Doing the thing</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700|Material+Icons">
-    <link rel="stylesheet"
-          href="https://unpkg.com/bootstrap-material-design@4.1.1/dist/css/bootstrap-material-design.min.css"
-          integrity="sha384-wXznGJNEXNG1NFsbm0ugrLFMQPWswR3lds2VeinahP8N0zJw9VWSopbjv2x7WCvX" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css"
+        integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
 </head>
+
 <body>
-<div class="jumbotron text-center" id="content-area">
-    <h1 id="progress">Processing</h1>
-</div>
+    {{.Nav}}
+    <div class="jumbotron text-center" id="content-area">
+        <h1 id="progress">Processing</h1>
+    </div>
 
-<script type="text/javascript">
-    function getCookie(cname) {
-        var name = cname + "=";
-        var decodedCookie = decodeURIComponent(document.cookie);
-        var ca = decodedCookie.split(';');
-        for (var i = 0; i < ca.length; i++) {
-            var c = ca[i];
-            while (c.charAt(0) == ' ') {
-                c = c.substring(1);
-            }
-            if (c.indexOf(name) == 0) {
-                return c.substring(name.length, c.length);
-            }
-        }
-        return "";
-    };
-
-    function makePlaylist() {
-        var playlist_id = "{{.PlaylistID}}";
-        var weeks = "{{.Weeks}}"
-        var priv = "{{.Private}}"
-        var uuid = getCookie("session_id");
-        var xhr = new XMLHttpRequest();
-        xhr.open("POST", '/work-bitch', true);
-        xhr.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
-        xhr.onreadystatechange = function () {
-            if (this.readyState === XMLHttpRequest.DONE) {
-                switch (this.status) {
-                    case 200:
-                        document.getElementById("progress").innerHTML = "Done! Check your Spotify account";
-                        var link = document.createElement("a");
-                        link.appendChild(document.createTextNode("Let's listen"));
-                        link.setAttribute("href", this.responseText);
-                        document.getElementById("content-area").appendChild(link);
-                        break;
-                    default:
-                        document.getElementById("progress").innerHTML = "Error: " + this.statusText;
+    <script type="text/javascript">
+        function getCookie(cname) {
+            var name = cname + "=";
+            var decodedCookie = decodeURIComponent(document.cookie);
+            var ca = decodedCookie.split(';');
+            for (var i = 0; i < ca.length; i++) {
+                var c = ca[i];
+                while (c.charAt(0) == ' ') {
+                    c = c.substring(1);
                 }
-                var link = document.createElement("a");
-                link.appendChild(document.createTextNode("Wanna see me do it again?"));
-                link.setAttribute("href", "/");
-                document.getElementById("content-area").appendChild(link);
+                if (c.indexOf(name) == 0) {
+                    return c.substring(name.length, c.length);
+                }
             }
+            return "";
         };
-        xhr.send("uuid=" + uuid + "&playlist=" + playlist_id + "&weeks=" + weeks + "&private=" + priv);
-    }
 
-    window.onload = makePlaylist;
-</script>
-<script src="https://code.jquery.com/jquery-3.2.1.slim.min.js"
+        function makePlaylist() {
+            var playlist_id = "{{.PlaylistID}}";
+            var weeks = "{{.Weeks}}"
+            var priv = "{{.Private}}"
+            var uuid = getCookie("session_id");
+            var xhr = new XMLHttpRequest();
+            xhr.open("POST", '/work-bitch', true);
+            xhr.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
+            xhr.onreadystatechange = function () {
+                if (this.readyState === XMLHttpRequest.DONE) {
+                    switch (this.status) {
+                        case 200:
+                            document.getElementById("progress").innerHTML = "Done! Check your Spotify account";
+                            var link = document.createElement("a");
+                            link.appendChild(document.createTextNode("Let's listen"));
+                            link.setAttribute("href", this.responseText);
+                            link.setAttribute("class", "btn btn-primary");
+                            document.getElementById("content-area").appendChild(link);
+                            break;
+                        default:
+                            document.getElementById("progress").innerHTML = "Error: " + this.statusText;
+                    }
+                    var link = document.createElement("a");
+                    link.appendChild(document.createTextNode("Wanna see me do it again?"));
+                    link.setAttribute("href", "/");
+                    link.setAttribute("class", "btn btn-secondary");
+                    document.getElementById("content-area").appendChild(link);
+                }
+            };
+            xhr.send("uuid=" + uuid + "&playlist=" + playlist_id + "&weeks=" + weeks + "&private=" + priv);
+        }
+
+        window.onload = makePlaylist;
+    </script>
+    <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js"
         integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN"
         crossorigin="anonymous"></script>
-<script src="https://unpkg.com/popper.js@1.12.6/dist/umd/popper.js"
-        integrity="sha384-fA23ZRQ3G/J53mElWqVJEGJzU0sTs+SvzG8fXVWP+kJQ1lwFAOkcUOysnlKJC33U"
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js"
+        integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q"
         crossorigin="anonymous"></script>
-<script src="https://unpkg.com/bootstrap-material-design@4.1.1/dist/js/bootstrap-material-design.js"
-        integrity="sha384-CauSuKpEqAFajSpkdjv3z9t8E7RlpJ1UP0lKM/+NdtSarroVKu069AlsRPKkFBz9"
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js"
+        integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl"
         crossorigin="anonymous"></script>
-<script>$(document).ready(function () {
-        $('body').bootstrapMaterialDesign();
-    });</script>
+    <script>$(document).ready(function () {
+            $('body').bootstrapMaterialDesign();
+        });</script>
 </body>
+
 </html>

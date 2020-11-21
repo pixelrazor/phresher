@@ -1,4 +1,4 @@
-module github.com/pixelrazor/spotifresh
+module github.com/pixelrazor/phresher
 
 go 1.13
 
