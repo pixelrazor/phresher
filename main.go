@@ -81,6 +81,12 @@ func main() {
 	http.HandleFunc("/Spotify.png", func(w http.ResponseWriter, r *http.Request) {
 		http.ServeFile(w, r, "Spotify.png")
 	})
+	http.HandleFunc("/logo.png", func(w http.ResponseWriter, r *http.Request) {
+		http.ServeFile(w, r, "logo.png")
+	})
+	http.HandleFunc("/favicon.ico", func(w http.ResponseWriter, r *http.Request) {
+		http.ServeFile(w, r, "favicon.ico")
+	})
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		if r.RequestURI == "/" {
 			homeHandler(w, r)
