@@ -73,9 +73,10 @@ func main() {
 	}
 	authCache = cache.New(24*time.Hour, time.Hour)
 	// first start an HTTP server
-	// TODO: about page, error pages, favicon
+	// TODO: error pages
 	http.HandleFunc("/callback", completeAuth)
 	http.HandleFunc("/index.html", homeHandler)
+	http.HandleFunc("/about.html", aboutHandler)
 	http.HandleFunc("/do-the-roar", roarHandler)
 	http.HandleFunc("/work-bitch", workHandler)
 	http.HandleFunc("/Spotify.png", func(w http.ResponseWriter, r *http.Request) {
@@ -342,6 +343,15 @@ func homeLoggedOutHandler(w http.ResponseWriter, r *http.Request) {
 	err := loggedOutTemplate.Execute(w, args)
 	if err != nil {
 		log.Println("Failed to execute logged in template:", err)
+	}
+}
+
+func aboutHandler(w http.ResponseWriter, r *http.Request) {
+	aboutTemplate := template.Must(template.ParseFiles("about.html"))
+	args := getBaseTemplateArgs()
+	err := aboutTemplate.Execute(w, args)
+	if err != nil {
+		log.Println("Failed to execute about template:", err)
 	}
 }
 

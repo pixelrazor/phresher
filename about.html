@@ -13,12 +13,23 @@
 <body>
   {{.Nav}}
 
-  <div class="jumbotron text-center">
-    <h1 class="display-4">Discover the freshest music</h1>
-    <p class="lead">Phresher gets the latest music released by the artists featured in the playlist of your choice!</p>
+  <div class="jumbotron ">
+    <h1 class="display-1">About</h1>
+    <p class="lead">Learn more about the app and the creator below. The source code can be found on <a
+        href="https://github.com/pixelrazor/phresher">GitHub</a>. For any issues, suggestions, or general feedback,
+      you can contact me at <a href="mailto:pixelrazor@gmail.com">pixelrazor@gmail.com</a>.</p>
     <hr class="my-4">
-    <p>With the power of Spotify, coffee, and code, we can find new music you may enjoy.</p>
-    <a class="btn btn-primary btn-lg" href="{{.Auth}}" role="button">Login via Spotify</a>
+    <h4 class="display-4">How does it work?</h4>
+    <p>There's not much fancy going on under the hood: We look at all the artists in your playlists, lookup their
+      albums,
+      then add them to a new playlist if they fresh enough!</p>
+    <h4 class="display-4">What are you doing with my account?</h4>
+    <p>Not much; we use the bare minumum permissions needed to read your playlists (both public and private) and to
+      create a new playlist (both public and private).</p>
+    <h4 class="display-4">Who are you and why should I trust you?</h4>
+    <p>I'm a software engineer that takes great pleasure from making things for others. My projects are free to use with
+      no ads; they're purely for your enjoyment! I also keep my code open source for all other to view, so there's no
+      secret behind these curtains!</p>
   </div>
   <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js"
     integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN"
