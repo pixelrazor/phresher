@@ -20,9 +20,8 @@ import (
 )
 
 const (
-	//redirectURI     = "https://phresher.pixelrazor.tech/callback"
-	redirectURI = "http://localhost:8086/callback"
-	port        = "8086"
+	redirectURI = "https://phresher.pixelrazor.tech/callback"
+	port        = "80"
 
 	sessionCookieID = "session_id"
 	playlistIDKKey  = "playlist_id"
