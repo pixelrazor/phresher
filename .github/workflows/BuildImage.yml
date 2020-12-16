@@ -43,4 +43,4 @@ jobs:
         if: ${{ github.ref == format('refs/heads/{0}', env.BRANCH) && env.DOCKERUSER && env.DOCKERPASS }}
         run: |
           docker push ${ENDPOINT}:${{ github.sha }}
-          docker push ${ENDPOINT}:
+          docker push ${ENDPOINT}
