@@ -13,6 +13,4 @@ COPY . .
 
 RUN go build -o ./phesher .
 
-EXPOSE 8080
-
 CMD ["./phesher"]

@@ -38,26 +38,10 @@ var (
 
 	state     string
 	authCache *cache.Cache
-) // TODO: add greeting to main page after login
+)
 
 /*
-"/", "/index.html"	-> home page
-					-> if user is authenticated, it will allow them to pick a playlist and a duration
-					-> use a form to do a post, with playlists in a dropdown box. Checkbox for private/public
-					-> if user is not authenticated, there will be a login button
-
-"/callback" 		-> oauth callback
-
-"/do-the-roar" 		-> loading page. use websocket to wait for server to respond
-					-> home will send the id as a post param; hard code this number into the generated page
-					-> on finish, go to "/done"
-					-> on error, go to "/error"
-
-"/done"				-> playlist URI is a form param, and will give link to the playlist
-
 "/error"			-> page displays the error that is in the form param
-
-TODO: if not authed when going to a page, redirect to spotify auth page and have it callback to the page they tried to go to
 
 TODO: make playlist from user's top artists
 TODO: make playlist from user's library (saves songs and albums)
