@@ -17,7 +17,7 @@ jobs:
           docker build --no-cache -t ${{ github.sha }} .
 
       - name: Tag image
-        if: ${{ github.ref == env.BRANCH }}
+        if: ${{ github.ref == format('refs/heads/{0}', env.BRANCH) }}
         run: |
           docker tag ${{ github.sha }} ${ENDPOINT}:
           docker tag ${{ github.sha }} ${ENDPOINT}:${{ github.sha }}
@@ -25,7 +25,7 @@ jobs:
           docker tag ${{ github.sha }} ghcr.io/${ENDPOINT}:${{ github.sha }}
 
       - name: Credential check
-        if: ${{ github.ref == env.BRANCH }}
+        if: ${{ github.ref == format('refs/heads/{0}', env.BRANCH) }}
         run: |
           echo "DOCKERUSER=${{ secrets.DOCKERUSER }}" >> $GITHUB_ENV
           echo "DOCKERPASS=${{ secrets.DOCKERPASS }}" >> $GITHUB_ENV
@@ -37,12 +37,12 @@ jobs:
           fi
 
       - name: Login to DockerHub
-        if: ${{ github.ref == env.BRANCH && env.DOCKERUSER && env.DOCKERPASS }}
+        if: ${{ github.ref == format('refs/heads/{0}', env.BRANCH) && env.DOCKERUSER && env.DOCKERPASS }}
         run: |
           echo ${{ secrets.DOCKERPASS }} | docker login -u ${{ secrets.DOCKERUSER }} --password-stdin
 
       - name: Push tags to DockerHub
-        if: ${{ github.ref == env.BRANCH && env.DOCKERUSER && env.DOCKERPASS }}
+        if: ${{ github.ref == format('refs/heads/{0}', env.BRANCH) && env.DOCKERUSER && env.DOCKERPASS }}
         run: |
           docker push ${ENDPOINT}:${{ github.sha }}
           docker push ${ENDPOINT}:
