@@ -1,16 +1,9 @@
 FROM golang:alpine
 
-RUN apk add --no-cache git
-
 WORKDIR /app/phesher
-
-COPY go.mod .
-COPY go.sum .
-
-RUN go mod download
 
 COPY . .
 
-RUN go build -o ./phesher .
+RUN go install
 
-CMD ["./phesher"]
+ENTRYPOINT ["phesher"]
