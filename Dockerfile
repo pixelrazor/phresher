@@ -1,9 +1,9 @@
 FROM golang:alpine
 
-WORKDIR /app/phesher
+WORKDIR /app/phresher
 
 COPY . .
 
 RUN go install
 
-ENTRYPOINT ["phesher"]
+ENTRYPOINT ["phresher"]
